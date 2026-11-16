@@ -24,6 +24,7 @@
   --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; --green:#5cc489; --green-soft:#17321f; --red:#ff7a6b; --red-soft:#3a1c1a; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:32px 32px;background-attachment:fixed}
@@ -205,6 +206,19 @@ a.lk span{font-size:12.5px;color:var(--muted)}
 a.lk:hover{border-color:var(--blue)}
 a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
+/* sync */
+.sync .spill{font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--blue-soft);color:var(--muted)}
+.sync .spill.ok{background:var(--green-soft);color:var(--green)}
+.sync .spill.busy{background:var(--amber-soft);color:var(--amber)}
+.sync .spill.err{background:var(--red-soft);color:var(--red)}
+.sync .sub{margin:0}
+.sform{display:grid;gap:6px;max-width:520px}
+.sform label{font-size:13px;font-weight:700}
+.sform input{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+.sform input:focus{outline:2px solid var(--blue);outline-offset:0}
+.sform .row,.sconn{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.sform code{font-family:var(--f-mono);font-size:11.5px}
+
 @media (max-width:760px){
   .tools{grid-template-columns:1fr}
   .ck-body{grid-template-columns:1fr}
@@ -332,7 +346,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
         <div class="cal" id="cal"></div>
       </div>
     </div>
-    <p class="store-note">點月曆上的日期可以補打卡或取消。打卡、章節進度、計時與便利貼都存在這台裝置的瀏覽器裡，換手機或清除瀏覽資料會消失。</p>
+    <p class="store-note">點月曆上的日期可以補打卡或取消。<span id="storeNote">打卡、章節進度、計時與便利貼目前只存在這台裝置。到頁面下方「雲端同步」連上 GitHub，就能在手機和電腦之間同步。</span></p>
   </section>
 
   <div class="tools">
@@ -412,6 +426,22 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     </div></div>
   </section>
 
+  <section class="panel sync" id="syncPanel" aria-label="雲端同步">
+    <div class="ph"><h2>雲端同步（GitHub）</h2><span class="spill" id="syncPill">未連線</span></div>
+    <p class="sub" id="syncMsg">把打卡、章節進度、讀書時數與便利貼存到你自己的私人 GitHub repo，換手機也不會消失。</p>
+    <form class="sform" id="syncForm" autocomplete="off">
+      <label for="syncRepo">資料 repo（owner/名稱）</label>
+      <input id="syncRepo" type="text" value="YUAN-5149/exam-study-data" spellcheck="false" required>
+      <label for="syncToken">GitHub Token</label>
+      <input id="syncToken" type="password" placeholder="github_pat_…" spellcheck="false" required>
+      <div class="row"><button type="submit" class="nbtn pri">連線並同步</button></div>
+      <p class="store-note">Token 只存在這台裝置的瀏覽器，用來讀寫上面那個 repo 的 <code>progress.json</code>。請用只限這個 repo、權限只有 Contents 讀寫的 fine-grained token。</p>
+    </form>
+    <div class="row sconn" id="syncConn" hidden>
+      <button type="button" class="nbtn pri" id="syncNow">立即同步</button>
+      <button type="button" class="nbtn" id="syncOff">在這台裝置中斷連線</button>
+    </div>
+  </section>
   <footer id="today"></footer>
 </div>
 
@@ -475,7 +505,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 (function(){
   var KEY="studyhub.v1", st={days:{},prog:{}};
   try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); if(o&&typeof o==="object"){for(var k in o) st[k]=o[k];} st.days=st.days||{}; st.prog=st.prog||{};}}catch(e){}
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+  function save(quiet){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){} if(!quiet&&window.__sync) window.__sync.changed();}
   function pad(n){return (n<10?"0":"")+n;}
   function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
   function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
@@ -702,6 +732,130 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     document.getElementById("rvNext").addEventListener("click",function(){pick();showRv();});
     document.getElementById("rvDone").addEventListener("click",function(){ if(!rv) return; var id=rv.id; st.notes=st.notes.filter(function(n){return n.id!==id;}); rv=null; save(); render(); });
     render();
+  })();
+
+  /* ---------- GitHub 雲端同步 ---------- */
+  (function(){
+    var SK="studyhub.sync", cfg={};
+    try{cfg=JSON.parse(localStorage.getItem(SK)||"{}")||{};}catch(e){cfg={};}
+    function saveCfg(){try{localStorage.setItem(SK,JSON.stringify(cfg));}catch(e){}}
+    var pill=document.getElementById("syncPill"), msg=document.getElementById("syncMsg");
+    var form=document.getElementById("syncForm"), conn=document.getElementById("syncConn");
+    var timer=null, busy=false;
+    function status(cls,text,detail){
+      pill.className="spill "+(cls||""); pill.textContent=text; if(detail!=null) msg.textContent=detail;
+      var n=document.getElementById("storeNote");
+      if(n) n.textContent=cfg.token?"已連上 GitHub 雲端同步（"+cfg.repo+"），換裝置也能接著用。":"打卡、章節進度、計時與便利貼目前只存在這台裝置。到頁面下方「雲端同步」連上 GitHub，就能在手機和電腦之間同步。";
+    }
+    function ui(){
+      form.hidden=!!cfg.token; conn.hidden=!cfg.token;
+      if(!cfg.token) status("","未連線","把打卡、章節進度、讀書時數與便利貼存到你自己的私人 GitHub repo，換手機也不會消失。");
+      else status(cfg.dirty?"busy":"ok",cfg.dirty?"有變更待同步":"已同步",cfg.at?"上次同步："+new Date(cfg.at).toLocaleString("zh-TW",{hour12:false})+" · "+cfg.repo:cfg.repo);
+    }
+    function b64e(str){return btoa(unescape(encodeURIComponent(str)));}
+    function b64d(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,""))));}
+    function api(method,body){
+      return fetch("https://api.github.com/repos/"+cfg.repo+"/contents/progress.json"+(method==="GET"?"?t="+Date.now():""),{
+        method:method, cache:"no-store",
+        headers:{"Authorization":"Bearer "+cfg.token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},
+        body:body?JSON.stringify(body):undefined
+      });
+    }
+    function payload(o){var c={}; for(var k in o) if(k!=="timer") c[k]=o[k]; return c;}
+    function merge(a,b){
+      var m={days:{},prog:{},mins:{},poms:{},notes:[],gone:{}};
+      [a,b].forEach(function(x){
+        x=x||{};
+        for(var k in (x.days||{})) m.days[k]=1;
+        for(var g in (x.gone||{})) m.gone[g]=1;
+        for(var s in (x.prog||{})) (x.prog[s]||[]).forEach(function(i){ var l=m.prog[s]||(m.prog[s]=[]); if(l.indexOf(i)<0) l.push(i); });
+        ["mins","poms"].forEach(function(f){ for(var d in (x[f]||{})) m[f][d]=Math.max(m[f][d]||0,x[f][d]); });
+        (x.notes||[]).forEach(function(n){ if(!m.notes.some(function(y){return y.id===n.id;})) m.notes.push(n); });
+      });
+      m.notes=m.notes.filter(function(n){return !m.gone[n.id];});
+      return m;
+    }
+    function same(a,b){return JSON.stringify(payload(a))===JSON.stringify(payload(b));}
+    function adopt(remote){
+      var timerKeep=st.timer, changed=!same(st,remote);
+      for(var k in st) if(k!=="timer") delete st[k];
+      for(var k2 in remote) if(k2!=="timer") st[k2]=remote[k2];
+      st.timer=timerKeep; st.days=st.days||{}; st.prog=st.prog||{};
+      save(true);
+      if(changed){ try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){} location.reload(); }
+      return changed;
+    }
+    function fail(r,stage){
+      var why=r&&r.status===401?"Token 無效或已過期，請重新連線。":r&&r.status===404?"找不到 repo "+cfg.repo+"，或 token 沒有它的權限。":r&&r.status===403?"Token 權限不足，需要這個 repo 的 Contents 讀寫權限。":"連不上 GitHub（"+(r&&r.status||"網路錯誤")+"），稍後會再試。";
+      status("err","同步失敗",why); busy=false; return null;
+    }
+    function pull(){
+      return api("GET").then(function(r){
+        if(r.status===404) return {missing:true,res:r};
+        if(!r.ok) throw r;
+        return r.json().then(function(j){return {sha:j.sha,data:JSON.parse(b64d(j.content))};});
+      });
+    }
+    function push(sha,retry){
+      var body={message:"sync "+new Date().toISOString(),content:b64e(JSON.stringify(payload(st),null,1))};
+      if(sha) body.sha=sha;
+      return api("PUT",body).then(function(r){
+        if((r.status===409||r.status===422)&&!retry) return sync(true);
+        if(!r.ok) throw r;
+        return r.json().then(function(j){ cfg.sha=j.content.sha; cfg.dirty=false; cfg.at=Date.now(); saveCfg(); busy=false; ui(); });
+      });
+    }
+    function sync(force){
+      if(!cfg.token) return Promise.resolve();
+      if(busy&&!force) return Promise.resolve();
+      busy=true; status("busy","同步中…");
+      return pull().then(function(rem){
+        if(rem.missing){
+          // first time: repo exists but no file yet (or no access)
+          return api("GET").then(function(){ return push(null,true); });
+        }
+        if(cfg.dirty){
+          var m=merge(st,rem.data); var changed=!same(st,m);
+          for(var k in m) st[k]=m[k]; save(true);
+          return push(rem.sha,true).then(function(){ if(changed){ try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){} location.reload(); } });
+        }
+        cfg.sha=rem.sha; cfg.at=Date.now(); cfg.dirty=false; saveCfg(); busy=false; ui();
+        adopt(rem.data);
+      }).catch(function(r){ return fail(r); });
+    }
+    window.__sync={changed:function(){
+      if(!cfg.token) return;
+      cfg.dirty=true; saveCfg(); ui();
+      clearTimeout(timer); timer=setTimeout(function(){sync();},2500);
+    }};
+    // remember note deletions so they don't come back from another device
+    var origFilter=null;
+    document.addEventListener("click",function(e){
+      var d=e.target.closest("[data-del]"); if(d&&d.dataset.confirm==="1"){ st.gone=st.gone||{}; st.gone[d.dataset.del]=1; }
+      if(e.target.id==="rvDone"){ var q=document.getElementById("rvQ").textContent; (st.notes||[]).forEach(function(n){ if(n.q===q){ st.gone=st.gone||{}; st.gone[n.id]=1; } }); }
+    },true);
+
+    form.addEventListener("submit",function(e){
+      e.preventDefault();
+      var repo=document.getElementById("syncRepo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,"");
+      var tok=document.getElementById("syncToken").value.trim();
+      if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ status("err","格式錯誤","repo 請填成「帳號/名稱」，例如 YUAN-5149/exam-study-data。"); return; }
+      cfg={repo:repo,token:tok,dirty:true}; saveCfg();
+      document.getElementById("syncToken").value="";
+      ui(); sync().then(function(){ if(!cfg.dirty&&cfg.at) return; });
+      // if the very first sync fails, drop the bad token so the form shows again
+      setTimeout(function(){ if(pill.classList.contains("err")&&!cfg.at){ var m=msg.textContent; cfg={}; saveCfg(); ui(); status("err","連線失敗",m); } },8000);
+    });
+    document.getElementById("syncNow").addEventListener("click",function(){ cfg.dirty=cfg.dirty||false; sync(); });
+    document.getElementById("syncOff").addEventListener("click",function(){
+      var b=this;
+      if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="確定中斷？（資料仍保留在 GitHub）"; setTimeout(function(){b.dataset.c="";b.textContent="在這台裝置中斷連線";},4000); return; }
+      cfg={}; saveCfg(); ui();
+    });
+    document.addEventListener("visibilitychange",function(){ if(!document.hidden&&cfg.token&&!busy) sync(); });
+    ui();
+    var justPulled=false; try{justPulled=sessionStorage.getItem("studyhub.pulled")==="1"; sessionStorage.removeItem("studyhub.pulled");}catch(e){}
+    if(cfg.token){ if(justPulled) { status("ok","已同步","已從 GitHub 載入最新資料 · "+cfg.repo); } else sync(); }
   })();
 })();
 </script>
