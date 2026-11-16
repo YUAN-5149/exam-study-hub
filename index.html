@@ -143,7 +143,58 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
 .prog li input:checked + span{color:var(--muted);text-decoration:line-through}
 .store-note{font-size:12px;color:var(--muted);margin:0}
 
+/* tools row: timer + notes */
+.tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:16px;align-items:start}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 20px;display:grid;gap:14px;min-width:0}
+.panel h2{font-family:var(--f-display);font-size:20px;margin:0}
+.panel .sub{font-size:13px;color:var(--muted)}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.chip.on{background:var(--blue);border-color:var(--blue);color:var(--paper)}
+.chip:focus-visible,.tbtn:focus-visible,.nbtn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.clock{display:grid;justify-items:center;gap:4px;padding:6px 0}
+.ring{position:relative;width:min(220px,70vw);aspect-ratio:1;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8}
+.ring .bg{stroke:var(--blue-soft)}
+.ring .fg{stroke:var(--blue);stroke-linecap:round;transition:stroke-dashoffset .5s linear}
+.ring.brk .fg{stroke:var(--green)}
+.ring .t{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:2px}
+.ring .t b{font-family:var(--f-mono);font-size:clamp(38px,9vw,48px);font-variant-numeric:tabular-nums;line-height:1}
+.ring .t span{font-size:13px;color:var(--muted)}
+.tctl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tbtn{font:inherit;font-weight:700;font-size:15px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:9px 20px;cursor:pointer}
+.tbtn.main{background:var(--blue);border-color:var(--blue);color:var(--paper);min-width:110px}
+.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tstats div{border:1px solid var(--line);border-radius:6px;padding:8px;display:grid;justify-items:center}
+.tstats b{font-family:var(--f-mono);font-size:20px;font-variant-numeric:tabular-nums}
+.tstats span{font-size:12px;color:var(--muted)}
+
+.review{border:1px solid var(--amber);background:var(--amber-soft);border-radius:6px;padding:14px 16px;display:grid;gap:8px}
+.review .rh{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--amber);font-weight:700}
+.review .q{font-size:16px;font-weight:700;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.review .a{font-size:14.5px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;border-top:1px dashed var(--amber);padding-top:8px}
+.review .rb{display:flex;gap:8px;flex-wrap:wrap}
+.nbtn{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 14px;cursor:pointer}
+.nbtn.pri{background:var(--blue);border-color:var(--blue);color:var(--paper)}
+.nform{display:grid;gap:8px}
+.nform .row{display:flex;gap:8px;flex-wrap:wrap}
+.nform select,.nform textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+.nform select{width:auto;flex:none}
+.nform textarea{resize:vertical;min-height:44px}
+.nform textarea:focus,.nform select:focus{outline:2px solid var(--blue);outline-offset:0}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.nlist{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:420px;overflow:auto}
+.nlist li{border:1px solid var(--line);border-left:4px solid var(--c,var(--blue));border-radius:6px;padding:10px 12px;display:grid;gap:4px}
+.nlist .meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.nlist .q{font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere}
+.nlist .a{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.nlist button{font:inherit;font-size:12px;border:0;background:none;color:var(--muted);cursor:pointer;padding:0 2px;text-decoration:underline}
+.empty{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:14px;text-align:center}
+
 @media (max-width:760px){
+  .tools{grid-template-columns:1fr}
   .ck-body{grid-template-columns:1fr}
   .exam-row{grid-template-columns:1fr}
   .grid{grid-template-columns:1fr}
@@ -210,8 +261,61 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
         <div class="cal" id="cal"></div>
       </div>
     </div>
-    <p class="store-note">點月曆上的日期可以補打卡或取消。打卡與章節進度存在這台裝置的瀏覽器裡，換手機或清除瀏覽資料會消失。</p>
+    <p class="store-note">點月曆上的日期可以補打卡或取消。打卡、章節進度、計時與便利貼都存在這台裝置的瀏覽器裡，換手機或清除瀏覽資料會消失。</p>
   </section>
+
+  <div class="tools">
+    <section class="panel" aria-label="讀書計時器">
+      <div class="ph"><h2>讀書計時器</h2><span class="sub">專注結束會自動打卡</span></div>
+      <div class="modes" id="tModes">
+        <button type="button" class="chip" data-m="25">專注 25</button>
+        <button type="button" class="chip" data-m="45">專注 45</button>
+        <button type="button" class="chip" data-m="5" data-b="1">休息 5</button>
+        <button type="button" class="chip" data-m="15" data-b="1">休息 15</button>
+      </div>
+      <div class="clock">
+        <div class="ring" id="tRing">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="tArc" cx="50" cy="50" r="44"/></svg>
+          <div class="t"><b id="tTime" aria-live="off">25:00</b><span id="tState">準備開始</span></div>
+        </div>
+      </div>
+      <div class="tctl">
+        <button type="button" class="tbtn main" id="tStart">開始</button>
+        <button type="button" class="tbtn" id="tReset">結束並記錄</button>
+      </div>
+      <div class="tstats">
+        <div><b id="tToday">0</b><span>今日分鐘</span></div>
+        <div><b id="tWeek">0</b><span>本週小時</span></div>
+        <div><b id="tCount">0</b><span>今日番茄</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="錯題便利貼">
+      <div class="ph"><h2>錯題便利貼</h2><span class="sub" id="nCount">0 則</span></div>
+      <div class="review" id="nReview" hidden>
+        <div class="rh"><span>今日複習</span><span id="rvSubj"></span></div>
+        <p class="q" id="rvQ"></p>
+        <p class="a" id="rvA" hidden></p>
+        <div class="rb">
+          <button type="button" class="nbtn pri" id="rvShow">看答案</button>
+          <button type="button" class="nbtn" id="rvNext">下一則</button>
+          <button type="button" class="nbtn" id="rvDone">已熟記，移除</button>
+        </div>
+      </div>
+      <form class="nform" id="nForm">
+        <div class="row">
+          <select id="nSubj" aria-label="科目">
+            <option value="proc">採購法</option><option value="reno">室裝乙級</option><option value="fire">消防設備</option><option value="plum">水電法規</option>
+          </select>
+          <textarea id="nQ" rows="1" placeholder="題目或條文，例如：採購法第 22 條 限制性招標情形" aria-label="題目或條文" required></textarea>
+        </div>
+        <textarea id="nA" rows="2" placeholder="答案或重點（選填）" aria-label="答案或重點"></textarea>
+        <div class="row"><button type="submit" class="nbtn pri">貼上便利貼</button></div>
+      </form>
+      <div class="filters" id="nFilters"></div>
+      <ul class="nlist" id="nList"></ul>
+    </section>
+  </div>
 
   <section style="display:grid;gap:12px">
     <div class="sec-h"><h2>學習科目</h2><span>點圖示進入各科學習網站（另開分頁）</span></div>
@@ -334,7 +438,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
 <script>
 (function(){
   var KEY="studyhub.v1", st={days:{},prog:{}};
-  try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); st.days=o.days||{}; st.prog=o.prog||{};}}catch(e){}
+  try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); if(o&&typeof o==="object"){for(var k in o) st[k]=o[k];} st.days=st.days||{}; st.prog=st.prog||{};}}catch(e){}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
   function pad(n){return (n<10?"0":"")+n;}
   function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -436,6 +540,133 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
     });
     upd();
   });
+
+  /* ---------- 讀書計時器 ---------- */
+  st.mins=st.mins||{}; st.poms=st.poms||{}; st.notes=st.notes||[];
+  (function(){
+    var t=st.timer||{m:25,b:0,run:false,end:0,left:25*60,start:0};
+    st.timer=t;
+    var arc=document.getElementById("tArc"), C=2*Math.PI*44, tick=null, ac=null;
+    arc.style.strokeDasharray=C;
+    var modes=document.getElementById("tModes"), startB=document.getElementById("tStart");
+    function secsLeft(){return t.run?Math.max(0,Math.round((t.end-Date.now())/1000)):t.left;}
+    function stats(){
+      var tm=st.mins[tk]||0, wk=0, d=new Date(today), dow=(d.getDay()+6)%7;
+      for(var i=0;i<=dow;i++){var x=new Date(today);x.setDate(x.getDate()-i);wk+=st.mins[ymd(x)]||0;}
+      document.getElementById("tToday").textContent=tm;
+      document.getElementById("tWeek").textContent=(wk/60).toFixed(1);
+      document.getElementById("tCount").textContent=st.poms[tk]||0;
+    }
+    function draw(){
+      var l=secsLeft(), tot=t.m*60;
+      document.getElementById("tTime").textContent=pad(Math.floor(l/60))+":"+pad(l%60);
+      arc.style.strokeDashoffset=C*(1-l/tot);
+      document.getElementById("tRing").classList.toggle("brk",!!t.b);
+      document.getElementById("tState").textContent=t.run?(t.b?"休息中":"專注中"):(l<tot?"已暫停":(t.b?"休息一下":"準備開始"));
+      startB.textContent=t.run?"暫停":(l<tot?"繼續":"開始");
+      modes.querySelectorAll(".chip").forEach(function(c){c.classList.toggle("on",+c.dataset.m===t.m&&(!!c.dataset.b)===!!t.b);});
+      document.title=t.run?(pad(Math.floor(l/60))+":"+pad(l%60)+" "+(t.b?"休息":"專注")):"元的考照學習基地";
+      if(t.run&&l<=0) finish();
+    }
+    function log(mins){
+      if(mins<1) return;
+      st.mins[tk]=(st.mins[tk]||0)+mins;
+      if(!st.days[tk]){st.days[tk]=1; renderCk();}
+    }
+    function beep(){
+      try{ if(navigator.vibrate) navigator.vibrate([300,150,300]); }catch(e){}
+      try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+        [0,0.35,0.7].forEach(function(o){var g=ac.createGain(),os=ac.createOscillator();os.frequency.value=880;os.connect(g);g.connect(ac.destination);
+          g.gain.setValueAtTime(.25,ac.currentTime+o);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+o+.3);os.start(ac.currentTime+o);os.stop(ac.currentTime+o+.3);});
+      }catch(e){}
+    }
+    function finish(){
+      var wasBreak=t.b;
+      if(!wasBreak){ log(t.m); st.poms[tk]=(st.poms[tk]||0)+1; }
+      t.run=false; clearInterval(tick);
+      if(wasBreak){ t.m=25; t.b=0; } else { t.m=5; t.b=1; }
+      t.left=t.m*60; save(); stats(); beep(); draw();
+      document.getElementById("tState").textContent=wasBreak?"休息結束，回來讀書":"完成一個番茄！休息一下";
+    }
+    function run(){ clearInterval(tick); tick=setInterval(draw,1000); }
+    startB.addEventListener("click",function(){
+      try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==="suspended") ac.resume(); }catch(e){}
+      if(t.run){ t.left=secsLeft(); t.run=false; clearInterval(tick); }
+      else { t.start=t.start&&t.left<t.m*60?t.start:Date.now(); t.end=Date.now()+t.left*1000; t.run=true; run(); }
+      save(); draw();
+    });
+    document.getElementById("tReset").addEventListener("click",function(){
+      var used=t.m*60-secsLeft();
+      if(!t.b) log(Math.floor(used/60));
+      t.run=false; clearInterval(tick); t.left=t.m*60; save(); stats(); draw();
+    });
+    modes.addEventListener("click",function(e){
+      var c=e.target.closest(".chip"); if(!c) return;
+      if(t.run && !t.b){ var used=t.m*60-secsLeft(); log(Math.floor(used/60)); }
+      t.m=+c.dataset.m; t.b=c.dataset.b?1:0; t.run=false; clearInterval(tick); t.left=t.m*60; save(); stats(); draw();
+    });
+    document.addEventListener("visibilitychange",function(){ if(!document.hidden) draw(); });
+    if(t.run) run();
+    stats(); draw();
+  })();
+
+  /* ---------- 錯題便利貼 ---------- */
+  (function(){
+    var names={proc:"採購法",reno:"室裝乙級",fire:"消防設備",plum:"水電法規"};
+    var colors={proc:"var(--blue)",reno:"var(--ink)",fire:"var(--amber)",plum:"var(--green)"};
+    var filter="all", rv=null;
+    var list=document.getElementById("nList"), fbox=document.getElementById("nFilters");
+    function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+    function pick(){
+      var n=st.notes; if(!n.length){rv=null;return;}
+      var seed=+tk.replace(/-/g,""), i=seed%n.length;
+      if(rv){ var cur=n.indexOf(rv); i=(cur+1+Math.floor(Math.random()*(n.length-1||1)))%n.length; if(n.length===1) i=0; }
+      rv=n[i];
+    }
+    function showRv(){
+      var box=document.getElementById("nReview");
+      if(!rv||st.notes.indexOf(rv)<0) pick();
+      box.hidden=!rv; if(!rv) return;
+      document.getElementById("rvSubj").textContent=names[rv.s]||"";
+      document.getElementById("rvQ").textContent=rv.q;
+      var a=document.getElementById("rvA"); a.textContent=rv.a||"（沒有填答案）"; a.hidden=true;
+      document.getElementById("rvShow").hidden=false;
+      document.getElementById("rvNext").hidden=st.notes.length<2;
+    }
+    function render(){
+      document.getElementById("nCount").textContent=st.notes.length+" 則";
+      var cnt={all:st.notes.length}; st.notes.forEach(function(n){cnt[n.s]=(cnt[n.s]||0)+1;});
+      fbox.innerHTML=""; [["all","全部"]].concat(Object.keys(names).map(function(k){return [k,names[k]];})).forEach(function(f){
+        if(f[0]!=="all"&&!cnt[f[0]]) return;
+        var b=document.createElement("button"); b.type="button"; b.className="chip"+(filter===f[0]?" on":""); b.dataset.f=f[0];
+        b.textContent=f[1]+" "+(cnt[f[0]]||0); fbox.appendChild(b);
+      });
+      fbox.hidden=!st.notes.length;
+      var items=st.notes.filter(function(n){return filter==="all"||n.s===filter;}).slice().reverse();
+      list.innerHTML=items.length?items.map(function(n){
+        return '<li style="--c:'+colors[n.s]+'"><div class="meta"><span>'+names[n.s]+' · '+esc(n.d)+'</span><button type="button" data-del="'+n.id+'">刪除</button></div><div class="q">'+esc(n.q)+'</div>'+(n.a?'<div class="a">'+esc(n.a)+'</div>':'')+'</li>';
+      }).join(""):'<li class="empty" style="border-left-width:1px">還沒有便利貼。把做錯的題目或容易忘的條文貼上來，每天會抽一則讓你複習。</li>';
+      showRv();
+    }
+    document.getElementById("nForm").addEventListener("submit",function(e){
+      e.preventDefault();
+      var q=document.getElementById("nQ").value.trim(), a=document.getElementById("nA").value.trim();
+      if(!q) return;
+      st.notes.push({id:Date.now().toString(36),s:document.getElementById("nSubj").value,q:q,a:a,d:md(today)});
+      document.getElementById("nQ").value=""; document.getElementById("nA").value="";
+      save(); render();
+    });
+    fbox.addEventListener("click",function(e){var b=e.target.closest(".chip"); if(b){filter=b.dataset.f; render();}});
+    list.addEventListener("click",function(e){
+      var b=e.target.closest("[data-del]"); if(!b) return;
+      if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="確定刪除？"; setTimeout(function(){b.dataset.confirm="";b.textContent="刪除";},3000); return; }
+      st.notes=st.notes.filter(function(n){return n.id!==b.dataset.del;}); save(); render();
+    });
+    document.getElementById("rvShow").addEventListener("click",function(){document.getElementById("rvA").hidden=false;this.hidden=true;});
+    document.getElementById("rvNext").addEventListener("click",function(){pick();showRv();});
+    document.getElementById("rvDone").addEventListener("click",function(){ if(!rv) return; var id=rv.id; st.notes=st.notes.filter(function(n){return n.id!==id;}); rv=null; save(); render(); });
+    render();
+  })();
 })();
 </script>
 </body>
