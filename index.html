@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4f8a">
+<title>元的考照學習基地</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: blueprint sheet — exam countdown band on top, motto, then a 2x2 grid of subject "drawing tiles" */
+:root{color-scheme:light;
+  --bg:#eef2f6; --paper:#ffffff; --ink:#14243a; --muted:#566579; --line:#cdd6e1;
+  --blue:#1f4f8a; --blue-soft:#e3ecf7; --amber:#c76a12; --amber-soft:#fbeedd;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1622; --paper:#162233; --ink:#e6edf6; --muted:#9aa9bc; --line:#2a3a50;
+  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1622; --paper:#162233; --ink:#e6edf6; --muted:#9aa9bc; --line:#2a3a50;
+  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:32px 32px;background-attachment:fixed}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:22px}
+
+header.top{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:22px 24px;display:grid;gap:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,4.4vw,38px);margin:2px 0 0;line-height:1.25;text-wrap:balance}
+h1 em{font-style:normal;color:var(--blue)}
+
+.exam-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr);gap:18px;align-items:stretch}
+.count{background:var(--blue);color:var(--paper);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.count .lbl{font-size:13px;opacity:.85}
+.count .num{font-family:var(--f-mono);font-weight:700;font-size:clamp(40px,7vw,56px);line-height:1;font-variant-numeric:tabular-nums}
+.count .num small{font-size:16px;font-family:var(--f-body);font-weight:500;margin-left:4px}
+.count .when{font-size:13px;opacity:.9}
+.counts{display:grid;gap:10px}
+.count.fire{background:var(--amber)}
+.count.reno{background:var(--ink);color:var(--bg)}
+.count.fire .num,.count.reno .num{font-size:clamp(34px,6vw,46px)}
+.batches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.batch{border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:4px;align-content:start}
+.batch.next{border-color:var(--amber);background:var(--amber-soft)}
+.batch .t{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.batch .t b{color:var(--amber);font-weight:700}
+.batch .d{font-family:var(--f-mono);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+.batch .r{font-size:12px;color:var(--muted)}
+.batch.past{opacity:.55}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.note a{color:var(--blue)}
+
+.motto{display:flex;align-items:center;gap:14px;padding:4px 4px 0}
+.motto blockquote{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(18px,2.6vw,22px);line-height:1.5;flex:1;min-width:0;transition:opacity .35s}
+.motto blockquote::before{content:"「";color:var(--amber)}
+.motto blockquote::after{content:"」";color:var(--amber)}
+.motto button{flex:none;font:inherit;font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+.motto button:hover{border-color:var(--blue);color:var(--blue)}
+
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sec-h h2{font-family:var(--f-display);font-size:20px;margin:0}
+.sec-h span{font-size:13px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+a.tile{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start;text-decoration:none;color:inherit;
+  background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px;position:relative;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+a.tile:hover{transform:translateY(-3px);border-color:var(--blue);box-shadow:0 10px 24px -14px rgba(20,36,58,.45)}
+a.tile:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.ico{width:64px;height:64px;border-radius:8px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center}
+.ico svg{width:36px;height:36px}
+.tile .code{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);letter-spacing:.06em}
+.tile h3{font-family:var(--f-display);font-size:19px;margin:2px 0 6px;line-height:1.35}
+.tile p{margin:0 0 12px;color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:1px 8px;color:var(--muted)}
+.go{font-size:13px;font-weight:700;color:var(--blue);margin-top:12px;display:inline-flex;gap:6px;align-items:center}
+.tile .src{position:absolute;top:14px;right:14px;font-size:11px;font-family:var(--f-mono);background:var(--amber-soft);color:var(--amber);border-radius:4px;padding:1px 7px}
+
+footer{font-size:12.5px;color:var(--muted);text-align:center}
+
+@media (max-width:760px){
+  .exam-row{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+}
+@media (max-width:460px){
+  .batches{grid-template-columns:1fr}
+  a.tile{grid-template-columns:1fr}
+  .motto{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){a.tile,.motto blockquote{transition:none}a.tile:hover{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">個人學習整合平台 · 116 年考照衝刺</div>
+      <h1>一天一條法規，<em>116 年</em>一次考過</h1>
+    </div>
+    <div class="exam-row">
+      <div class="counts">
+      <div class="count" aria-live="polite">
+        <span class="lbl" id="cLabel">距離下一梯次學科測試</span>
+        <span class="num"><span id="cDays">--</span><small>天</small></span>
+        <span class="when" id="cWhen"></span>
+      </div>
+      <div class="count fire">
+        <span class="lbl" id="fLabel">距離消防設備師考試</span>
+        <span class="num"><span id="fDays">--</span><small>天</small></span>
+        <span class="when">116/6/5（六）–6/7（一）· 報名 2/23–3/4</span>
+      </div>
+      <div class="count reno fire-size">
+        <span class="lbl" id="rLabel">距離室內裝修乙級學科</span>
+        <span class="num"><span id="rDays">--</span><small>天</small></span>
+        <span class="when">第三梯次 116/11/7（日）· 報名 8/27–9/7</span>
+      </div>
+      </div>
+      <div class="batches" id="batches"></div>
+    </div>
+    <p class="note">日期依 116 年度全國技術士技能檢定公告（學科測試日，報名期間另列）。消防設備師／士日期為考選部 116 年期日計畫表預定（台北、台中、高雄考區），請以<a href="https://wwwc.moex.gov.tw/" target="_blank" rel="noopener">考選部</a>公告為準；技檢簡章見<a href="https://skill.tcte.edu.tw/" target="_blank" rel="noopener">技檢中心</a>。</p>
+  </header>
+
+  <section class="motto" aria-label="今日勵志">
+    <blockquote id="quote">條文看十遍不如寫一遍，今天也把一條讀熟。</blockquote>
+    <button type="button" id="nextQuote">換一句</button>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <div class="sec-h"><h2>學習科目</h2><span>點圖示進入各科學習網站（另開分頁）</span></div>
+    <div class="grid">
+
+      <a class="tile" href="https://yuan-5149.github.io/gov-procurement-law-index/#/" target="_blank" rel="noopener">
+        <div class="ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 21h14"/><path d="M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0z"/><path d="M17 7l-3 7a3 3 0 0 0 6 0z"/></svg>
+        </div>
+        <div>
+          <div class="code">SUBJECT 01</div>
+          <h3>政府採購法</h3>
+          <p>條文索引與重點整理，招標、決標、履約與爭議處理一次查。</p>
+          <div class="tags"><span class="tag">條文索引</span><span class="tag">招標決標</span><span class="tag">履約爭議</span></div>
+          <span class="go">進入學習 →</span>
+        </div>
+      </a>
+
+      <a class="tile" href="https://yuan-5149.github.io/interior-renovation-exam/" target="_blank" rel="noopener">
+        <div class="ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-5h6v5"/><path d="M14.5 3.5l3 3"/></svg>
+        </div>
+        <div>
+          <div class="code">SUBJECT 02</div>
+          <h3>建築物室內裝修工程管理</h3>
+          <p>乙級學科題庫練習與術科重點，施工管理、材料與相關法規。</p>
+          <div class="tags"><span class="tag">乙級技術士</span><span class="tag">學科題庫</span><span class="tag">術科</span></div>
+          <span class="go">進入學習 →</span>
+        </div>
+      </a>
+
+      <a class="tile" href="https://yuan-5149.github.io/fire-safety-standard-notes/" target="_blank" rel="noopener">
+        <div class="ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 3.5 6 6.5 6 10.5A6 6 0 0 1 6 13.5c0-2 1-3.6 2.4-5 .3 1.6 1 2.6 2.1 3.1C10.4 8.8 11 5.8 12 3z"/><path d="M12 21a2.6 2.6 0 0 1-2.6-2.6c0-1.6 1.4-2.6 2.6-4.4 1.2 1.8 2.6 2.8 2.6 4.4A2.6 2.6 0 0 1 12 21z"/></svg>
+        </div>
+        <div>
+          <div class="code">SUBJECT 03</div>
+          <h3>消防安全設備設置標準</h3>
+          <p>各類場所消防設備設置基準筆記：滅火、警報、避難逃生與消防搶救設備。</p>
+          <div class="tags"><span class="tag">設置標準</span><span class="tag">場所分類</span><span class="tag">筆記</span></div>
+          <span class="go">進入學習 →</span>
+        </div>
+      </a>
+
+      <a class="tile" href="https://yuan-5149.github.io/plumbing-electrical-law-study/" target="_blank" rel="noopener">
+        <div class="ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>
+        </div>
+        <div>
+          <div class="code">SUBJECT 04</div>
+          <h3>水電法規</h3>
+          <p>給排水與用電相關法規學習資料，條文重點與考點整理。</p>
+          <div class="tags"><span class="tag">給排水</span><span class="tag">用電法規</span><span class="tag">重點整理</span></div>
+          <span class="go">進入學習 →</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <footer id="today"></footer>
+</div>
+
+<script>
+(function(){
+  // 116 年全國技術士技能檢定 學科測試日（依公告）
+  var batches = [
+    {name:"第一梯次", date:"2027-03-14", reg:"報名 1/4–1/13"},
+    {name:"第二梯次", date:"2027-07-04", reg:"報名 4/26–5/6"},
+    {name:"第三梯次", date:"2027-11-07", reg:"報名 8/27–9/7 · 室裝乙級"}
+  ];
+  var wk = "日一二三四五六";
+  function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+  function roc(d){return (d.getFullYear()-1911)+"/"+(d.getMonth()+1)+"/"+d.getDate()+"（"+wk[d.getDay()]+"）";}
+  var now = new Date(); var today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var next = -1;
+  batches.forEach(function(b,i){ if(next<0 && parse(b.date)>=today) next=i; });
+  var box = document.getElementById("batches");
+  batches.forEach(function(b,i){
+    var d=parse(b.date), el=document.createElement("div");
+    el.className="batch"+(i===next?" next":"")+(d<today?" past":"");
+    el.innerHTML='<div class="t"><span>'+b.name+'</span>'+(i===next?'<b>下一場</b>':'')+'</div>'+
+      '<div class="d">'+roc(d)+'</div><div class="r">'+b.reg+'</div>';
+    box.appendChild(el);
+  });
+  if(next>=0){
+    var nd=parse(batches[next].date);
+    document.getElementById("cDays").textContent=Math.round((nd-today)/86400000);
+    document.getElementById("cWhen").textContent="116 年"+batches[next].name+" · "+roc(nd);
+  } else {
+    document.getElementById("cLabel").textContent="116 年各梯次已結束";
+    document.getElementById("cDays").textContent="0";
+  }
+  var fd=parse("2027-06-05"), fdays=Math.round((fd-today)/86400000);
+  if(fdays>=0){document.getElementById("fDays").textContent=fdays;}
+  else{document.getElementById("fLabel").textContent="116 年消防設備師考試已結束";document.getElementById("fDays").textContent="0";}
+  var rdays=Math.round((parse("2027-11-07")-today)/86400000);
+  if(rdays>=0){document.getElementById("rDays").textContent=rdays;}
+  else{document.getElementById("rLabel").textContent="116 年室裝乙級學科已結束";document.getElementById("rDays").textContent="0";}
+  document.getElementById("today").textContent="今天是民國 "+roc(today)+"，繼續加油。";
+
+  var quotes = [
+    "條文看十遍不如寫一遍，今天也把一條讀熟。",
+    "每天進步一點點，考場上就多一分把握。",
+    "現在偷的懶，都會在考卷上還回來。",
+    "不求一次讀完，只求每天都有讀。",
+    "證照是給自己的承諾，116 年一起兌現。",
+    "累了就休息，但不要放棄。",
+    "題目做錯不可怕，同一題錯兩次才可惜。",
+    "把會的拿滿分，就已經贏一半。"
+  ];
+  var qi = today.getDate() % quotes.length, q=document.getElementById("quote");
+  q.textContent = quotes[qi];
+  document.getElementById("nextQuote").addEventListener("click",function(){
+    qi=(qi+1)%quotes.length; q.style.opacity=0;
+    setTimeout(function(){q.textContent=quotes[qi];q.style.opacity=1;},200);
+  });
+})();
+</script>
+</body>
+</html>
