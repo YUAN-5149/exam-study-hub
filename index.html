@@ -11,17 +11,17 @@
 /* Layout: blueprint sheet — exam countdown band on top, motto, then a 2x2 grid of subject "drawing tiles" */
 :root{color-scheme:light;
   --bg:#eef2f6; --paper:#ffffff; --ink:#14243a; --muted:#566579; --line:#cdd6e1;
-  --blue:#1f4f8a; --blue-soft:#e3ecf7; --amber:#c76a12; --amber-soft:#fbeedd;
+  --blue:#1f4f8a; --blue-soft:#e3ecf7; --amber:#c76a12; --amber-soft:#fbeedd; --green:#2f7d4f; --green-soft:#e2f2e8; --red:#c0392b; --red-soft:#fbe5e2;
   --f-display:"Noto Serif TC","Songti TC",serif;
   --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0e1622; --paper:#162233; --ink:#e6edf6; --muted:#9aa9bc; --line:#2a3a50;
-  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; color-scheme:dark}}
+  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; --green:#5cc489; --green-soft:#17321f; --red:#ff7a6b; --red-soft:#3a1c1a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0e1622; --paper:#162233; --ink:#e6edf6; --muted:#9aa9bc; --line:#2a3a50;
-  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; color-scheme:dark}
+  --blue:#7fb0ec; --blue-soft:#1b2d45; --amber:#f0a256; --amber-soft:#3a2a18; --green:#5cc489; --green-soft:#17321f; --red:#ff7a6b; --red-soft:#3a1c1a; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
@@ -86,7 +86,65 @@ a.tile:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
 footer{font-size:12.5px;color:var(--muted);text-align:center}
 
+
+/* reminder strip */
+.remind{display:grid;gap:8px}
+.rm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:10px 14px;font-size:14px}
+.rm .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.rm .txt{flex:1;min-width:0}
+.rm .txt b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.rm a{font-size:13px;color:var(--blue);font-weight:700;white-space:nowrap}
+.rm.warn{border-color:var(--amber);background:var(--amber-soft)}
+.rm.warn .dot{background:var(--amber)}
+.rm.open{border-color:var(--red);background:var(--red-soft)}
+.rm.open .dot{background:var(--red);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* check-in */
+.checkin{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:18px 20px;display:grid;gap:14px}
+.ck-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.ck-head h2{font-family:var(--f-display);font-size:20px;margin:0}
+.ck-head .sub{font-size:13px;color:var(--muted)}
+#ckBtn{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:999px;padding:10px 20px;cursor:pointer;background:var(--blue);color:var(--paper)}
+#ckBtn.done{background:var(--green-soft);color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+#ckBtn:focus-visible,.cal button:focus-visible,.prog summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.ck-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:start}
+.ck-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ck-stats div{border:1px solid var(--line);border-radius:6px;padding:10px 8px;display:grid;justify-items:center;gap:2px}
+.ck-stats b{font-family:var(--f-mono);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.ck-stats div:first-child b{color:var(--amber)}
+.ck-stats span{font-size:12px;color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .wd{font-size:11px;color:var(--muted);text-align:center}
+.cal button{font:inherit;font-family:var(--f-mono);font-size:12px;aspect-ratio:1;max-width:100%;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink);cursor:pointer;padding:0;font-variant-numeric:tabular-nums}
+.cal button.on{background:var(--green);border-color:var(--green);color:var(--paper)}
+.cal button.today{box-shadow:inset 0 0 0 2px var(--amber)}
+.cal button:disabled{opacity:.35;cursor:default}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:6px}
+.cal-nav button{font:inherit;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:4px;padding:0 10px;cursor:pointer}
+
+/* subject cards with progress */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;transition:border-color .18s ease,box-shadow .18s ease;min-width:0}
+.card:hover{border-color:var(--blue);box-shadow:0 10px 24px -14px rgba(20,36,58,.45)}
+.card a.tile{border:0;background:transparent;flex:1}
+.card a.tile:hover{transform:none;box-shadow:none}
+.prog{border-top:1px dashed var(--line);padding:12px 20px 14px;display:grid;gap:8px}
+.pbar{height:8px;border-radius:999px;background:var(--blue-soft);overflow:hidden}
+.pbar span{display:block;height:100%;background:var(--green);border-radius:999px;transition:width .3s ease}
+.prog summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);list-style:none}
+.prog summary::-webkit-details-marker{display:none}
+.prog summary::before{content:"▸";margin-right:6px;transition:transform .2s}
+.prog details[open] summary::before{transform:rotate(90deg)}
+.prog summary .lab{flex:1}
+.prog summary b{font-family:var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.prog ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:2px}
+.prog li label{display:flex;gap:8px;align-items:center;font-size:14px;padding:5px 2px;cursor:pointer}
+.prog li input{width:17px;height:17px;accent-color:var(--green);flex:none}
+.prog li input:checked + span{color:var(--muted);text-decoration:line-through}
+.store-note{font-size:12px;color:var(--muted);margin:0}
+
 @media (max-width:760px){
+  .ck-body{grid-template-columns:1fr}
   .exam-row{grid-template-columns:1fr}
   .grid{grid-template-columns:1fr}
 }
@@ -95,7 +153,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
   a.tile{grid-template-columns:1fr}
   .motto{flex-direction:column;align-items:flex-start}
 }
-@media (prefers-reduced-motion:reduce){a.tile,.motto blockquote{transition:none}a.tile:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.rm.open .dot{animation:none}.pbar span,.card{transition:none}a.tile,.motto blockquote{transition:none}a.tile:hover{transform:none}}
 </style>
 </head>
 <body>
@@ -129,16 +187,37 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
     <p class="note">日期依 116 年度全國技術士技能檢定公告（學科測試日，報名期間另列）。消防設備師／士日期為考選部 116 年期日計畫表預定（台北、台中、高雄考區），請以<a href="https://wwwc.moex.gov.tw/" target="_blank" rel="noopener">考選部</a>公告為準；技檢簡章見<a href="https://skill.tcte.edu.tw/" target="_blank" rel="noopener">技檢中心</a>。</p>
   </header>
 
+  <section class="remind" id="remind" aria-label="報名提醒"></section>
+
   <section class="motto" aria-label="今日勵志">
     <blockquote id="quote">條文看十遍不如寫一遍，今天也把一條讀熟。</blockquote>
     <button type="button" id="nextQuote">換一句</button>
+  </section>
+
+  <section class="checkin" aria-label="讀書打卡">
+    <div class="ck-head">
+      <div><h2>讀書打卡</h2><span class="sub" id="ckSub">今天還沒打卡</span></div>
+      <button type="button" id="ckBtn">今天讀了 ✓</button>
+    </div>
+    <div class="ck-body">
+      <div class="ck-stats">
+        <div><b id="ckStreak">0</b><span>連續天數</span></div>
+        <div><b id="ckMonth">0</b><span>本月天數</span></div>
+        <div><b id="ckTotal">0</b><span>累計天數</span></div>
+      </div>
+      <div>
+        <div class="cal-nav"><button type="button" id="calPrev" aria-label="上個月">‹</button><span id="calTitle"></span><button type="button" id="calNext" aria-label="下個月">›</button></div>
+        <div class="cal" id="cal"></div>
+      </div>
+    </div>
+    <p class="store-note">點月曆上的日期可以補打卡或取消。打卡與章節進度存在這台裝置的瀏覽器裡，換手機或清除瀏覽資料會消失。</p>
   </section>
 
   <section style="display:grid;gap:12px">
     <div class="sec-h"><h2>學習科目</h2><span>點圖示進入各科學習網站（另開分頁）</span></div>
     <div class="grid">
 
-      <a class="tile" href="https://yuan-5149.github.io/gov-procurement-law-index/#/" target="_blank" rel="noopener">
+      <a class="tile" data-subj="proc" href="https://yuan-5149.github.io/gov-procurement-law-index/#/" target="_blank" rel="noopener">
         <div class="ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 21h14"/><path d="M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0z"/><path d="M17 7l-3 7a3 3 0 0 0 6 0z"/></svg>
         </div>
@@ -151,7 +230,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
         </div>
       </a>
 
-      <a class="tile" href="https://yuan-5149.github.io/interior-renovation-exam/" target="_blank" rel="noopener">
+      <a class="tile" data-subj="reno" href="https://yuan-5149.github.io/interior-renovation-exam/" target="_blank" rel="noopener">
         <div class="ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-5h6v5"/><path d="M14.5 3.5l3 3"/></svg>
         </div>
@@ -164,7 +243,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
         </div>
       </a>
 
-      <a class="tile" href="https://yuan-5149.github.io/fire-safety-standard-notes/" target="_blank" rel="noopener">
+      <a class="tile" data-subj="fire" href="https://yuan-5149.github.io/fire-safety-standard-notes/" target="_blank" rel="noopener">
         <div class="ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 3.5 6 6.5 6 10.5A6 6 0 0 1 6 13.5c0-2 1-3.6 2.4-5 .3 1.6 1 2.6 2.1 3.1C10.4 8.8 11 5.8 12 3z"/><path d="M12 21a2.6 2.6 0 0 1-2.6-2.6c0-1.6 1.4-2.6 2.6-4.4 1.2 1.8 2.6 2.8 2.6 4.4A2.6 2.6 0 0 1 12 21z"/></svg>
         </div>
@@ -177,7 +256,7 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
         </div>
       </a>
 
-      <a class="tile" href="https://yuan-5149.github.io/plumbing-electrical-law-study/" target="_blank" rel="noopener">
+      <a class="tile" data-subj="plum" href="https://yuan-5149.github.io/plumbing-electrical-law-study/" target="_blank" rel="noopener">
         <div class="ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>
         </div>
@@ -249,6 +328,113 @@ footer{font-size:12.5px;color:var(--muted);text-align:center}
   document.getElementById("nextQuote").addEventListener("click",function(){
     qi=(qi+1)%quotes.length; q.style.opacity=0;
     setTimeout(function(){q.textContent=quotes[qi];q.style.opacity=1;},200);
+  });
+})();
+</script>
+<script>
+(function(){
+  var KEY="studyhub.v1", st={days:{},prog:{}};
+  try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); st.days=o.days||{}; st.prog=o.prog||{};}}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+  function pad(n){return (n<10?"0":"")+n;}
+  function ymd(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function parse(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+  function md(d){return (d.getMonth()+1)+"/"+d.getDate();}
+  var now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate()), tk=ymd(today);
+  function diff(a,b){return Math.round((a-b)/86400000);}
+
+  /* ---------- 報名提醒 ---------- */
+  var regs=[
+    {n:"技檢第一梯次",s:"2027-01-04",e:"2027-01-13",u:"https://skill.tcte.edu.tw/",site:"技檢中心"},
+    {n:"消防設備師／士",s:"2027-02-23",e:"2027-03-04",u:"https://wwwc.moex.gov.tw/",site:"考選部"},
+    {n:"技檢第二梯次",s:"2027-04-26",e:"2027-05-06",u:"https://skill.tcte.edu.tw/",site:"技檢中心"},
+    {n:"技檢第三梯次（室裝乙級）",s:"2027-08-27",e:"2027-09-07",u:"https://skill.tcte.edu.tw/",site:"技檢中心"}
+  ];
+  var box=document.getElementById("remind"), shown=0;
+  function row(cls,html,r){
+    var d=document.createElement("div"); d.className="rm "+cls;
+    d.innerHTML='<span class="dot"></span><span class="txt">'+html+'</span><a href="'+r.u+'" target="_blank" rel="noopener">'+r.site+' →</a>';
+    box.appendChild(d); shown++;
+  }
+  regs.forEach(function(r){
+    var s=parse(r.s), e=parse(r.e);
+    if(today>=s && today<=e){ row("open","<strong>報名中</strong>："+r.n+"，"+md(e)+" 截止，剩 <b>"+diff(e,today)+"</b> 天",r); }
+    else if(s>today && diff(s,today)<=14){ row("warn","<strong>快開始報名</strong>："+r.n+" "+md(s)+"–"+md(e)+"，還有 <b>"+diff(s,today)+"</b> 天",r); }
+  });
+  if(!shown){
+    var nx=regs.filter(function(r){return parse(r.s)>today;})[0];
+    if(nx){ row("calm","下一個報名："+nx.n+" "+md(parse(nx.s))+"–"+md(parse(nx.e))+"，還有 <b>"+diff(parse(nx.s),today)+"</b> 天（前 14 天會變色提醒）",nx); }
+    else box.hidden=true;
+  }
+
+  /* ---------- 讀書打卡 ---------- */
+  var btn=document.getElementById("ckBtn"), view=new Date(today.getFullYear(),today.getMonth(),1);
+  function streak(){
+    var d=new Date(today), n=0;
+    if(!st.days[ymd(d)]) d.setDate(d.getDate()-1);
+    while(st.days[ymd(d)]){n++; d.setDate(d.getDate()-1);}
+    return n;
+  }
+  function renderCk(){
+    var on=!!st.days[tk], keys=Object.keys(st.days), pre=tk.slice(0,7);
+    btn.textContent=on?"今天已打卡 ✓":"今天讀了 ✓"; btn.className=on?"done":"";
+    btn.setAttribute("aria-pressed",on);
+    var s=streak();
+    document.getElementById("ckSub").textContent=on?(s>1?"已連續 "+s+" 天，保持下去":"今天完成了，明天繼續"):(s?"昨天有讀，今天打卡就是連續 "+(s+1)+" 天":"今天還沒打卡");
+    document.getElementById("ckStreak").textContent=s;
+    document.getElementById("ckMonth").textContent=keys.filter(function(k){return k.slice(0,7)===pre;}).length;
+    document.getElementById("ckTotal").textContent=keys.length;
+    var cal=document.getElementById("cal"); cal.innerHTML="";
+    document.getElementById("calTitle").textContent=(view.getFullYear()-1911)+" 年 "+(view.getMonth()+1)+" 月";
+    "日一二三四五六".split("").forEach(function(w){var x=document.createElement("span");x.className="wd";x.textContent=w;cal.appendChild(x);});
+    for(var i=0;i<view.getDay();i++) cal.appendChild(document.createElement("span"));
+    var last=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+    for(var dd=1;dd<=last;dd++){
+      var day=new Date(view.getFullYear(),view.getMonth(),dd), k=ymd(day), b=document.createElement("button");
+      b.type="button"; b.textContent=dd; b.dataset.k=k;
+      if(st.days[k]) b.classList.add("on");
+      if(k===tk) b.classList.add("today");
+      if(day>today) b.disabled=true;
+      b.setAttribute("aria-label",(day.getMonth()+1)+"月"+dd+"日"+(st.days[k]?"，已打卡":""));
+      cal.appendChild(b);
+    }
+    document.getElementById("calNext").disabled=(view.getFullYear()===today.getFullYear()&&view.getMonth()===today.getMonth());
+  }
+  function toggle(k){ if(st.days[k]) delete st.days[k]; else st.days[k]=1; save(); renderCk(); }
+  btn.addEventListener("click",function(){toggle(tk);});
+  document.getElementById("cal").addEventListener("click",function(e){var b=e.target.closest("button"); if(b&&!b.disabled) toggle(b.dataset.k);});
+  document.getElementById("calPrev").addEventListener("click",function(){view.setMonth(view.getMonth()-1);renderCk();});
+  document.getElementById("calNext").addEventListener("click",function(){view.setMonth(view.getMonth()+1);renderCk();});
+  renderCk();
+
+  /* ---------- 各科章節進度 ---------- */
+  var chapters={
+    proc:["總則","招標","決標","履約管理","驗收","爭議處理","罰則","附則與重要子法"],
+    reno:["共同科目（職安、工作倫理、環保、節能）","建築法規與室內裝修管理辦法","室內裝修圖說判讀","裝修材料","施工技術與工法","工程估價","施工進度與品質管理","術科：施工計畫與工程管理實作"],
+    fire:["總則與場所用途分類","滅火設備","警報設備","避難逃生設備","消防搶救上之必要設備","公共危險物品場所","設備師／士相關法規"],
+    plum:["建築技術規則 建築設備編","建築物給水排水設備設計技術規範","自來水用戶用水設備標準","用戶用電設備裝置規則","電業法與相關法規"]
+  };
+  document.querySelectorAll("a.tile[data-subj]").forEach(function(a){
+    var key=a.dataset.subj, list=chapters[key]; if(!list) return;
+    var done=st.prog[key]||(st.prog[key]=[]);
+    var card=document.createElement("div"); card.className="card";
+    a.parentNode.insertBefore(card,a); card.appendChild(a);
+    var p=document.createElement("div"); p.className="prog";
+    var html='<div class="pbar" role="progressbar" aria-label="章節進度" aria-valuemin="0" aria-valuemax="100"><span></span></div><details><summary><span class="lab">章節進度（點開勾選）</span><b></b></summary><ul>';
+    list.forEach(function(c,i){ html+='<li><label><input type="checkbox" id="p-'+key+'-'+i+'" data-i="'+i+'"><span>'+c+'</span></label></li>'; });
+    p.innerHTML=html+'</ul></details>'; card.appendChild(p);
+    var bar=p.querySelector(".pbar"), fill=bar.firstChild, lab=p.querySelector("summary b");
+    p.querySelectorAll("input").forEach(function(cb){ cb.checked=done.indexOf(+cb.dataset.i)>=0; });
+    function upd(){
+      var c=list.filter(function(_,i){return done.indexOf(i)>=0;}).length, pct=Math.round(c/list.length*100);
+      fill.style.width=pct+"%"; bar.setAttribute("aria-valuenow",pct); lab.textContent=c+"/"+list.length+" · "+pct+"%";
+    }
+    p.addEventListener("change",function(e){
+      var i=+e.target.dataset.i, at=done.indexOf(i);
+      if(e.target.checked){ if(at<0) done.push(i); } else if(at>=0) done.splice(at,1);
+      save(); upd();
+    });
+    upd();
   });
 })();
 </script>
