@@ -427,19 +427,11 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
   </section>
 
   <section class="panel sync" id="syncPanel" aria-label="雲端同步">
-    <div class="ph"><h2>雲端同步（GitHub）</h2><span class="spill" id="syncPill">未連線</span></div>
-    <p class="sub" id="syncMsg">把打卡、章節進度、讀書時數與便利貼存到你自己的私人 GitHub repo，換手機也不會消失。</p>
-    <form class="sform" id="syncForm" autocomplete="off">
-      <label for="syncRepo">資料 repo（owner/名稱）</label>
-      <input id="syncRepo" type="text" value="YUAN-5149/exam-study-data" spellcheck="false" required>
-      <label for="syncToken">GitHub Token</label>
-      <input id="syncToken" type="password" placeholder="github_pat_…" spellcheck="false" required>
-      <div class="row"><button type="submit" class="nbtn pri">連線並同步</button></div>
-      <p class="store-note">Token 只存在這台裝置的瀏覽器，用來讀寫上面那個 repo 的 <code>progress.json</code>。請用只限這個 repo、權限只有 Contents 讀寫的 fine-grained token。</p>
-    </form>
-    <div class="row sconn" id="syncConn" hidden>
-      <button type="button" class="nbtn pri" id="syncNow">立即同步</button>
-      <button type="button" class="nbtn" id="syncOff">在這台裝置中斷連線</button>
+    <div class="ph"><h2>雲端同步（Firebase）</h2><span class="spill" id="syncPill">未登入</span></div>
+    <p class="sub" id="syncMsg">用 Google 帳號登入，打卡、章節進度、讀書時數與便利貼會即時同步到手機和電腦。</p>
+    <div class="row sconn">
+      <button type="button" class="nbtn pri" id="syncIn">用 Google 登入並同步</button>
+      <button type="button" class="nbtn" id="syncOut" hidden>登出這台裝置</button>
     </div>
   </section>
   <footer id="today"></footer>
@@ -734,32 +726,21 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     render();
   })();
 
-  /* ---------- GitHub 雲端同步 ---------- */
+  /* ---------- Firebase 雲端同步 ---------- */
   (function(){
-    var SK="studyhub.sync", cfg={};
-    try{cfg=JSON.parse(localStorage.getItem(SK)||"{}")||{};}catch(e){cfg={};}
-    function saveCfg(){try{localStorage.setItem(SK,JSON.stringify(cfg));}catch(e){}}
+    // 從 Firebase 主控台「專案設定 → 你的應用程式 → SDK 設定」複製過來（這些值可以公開）
+    var FB_CONFIG = null; /*FB_CONFIG*/
+    var VER="10.12.2", DK="studyhub.fb";
+    try{localStorage.removeItem("studyhub.sync");}catch(e){}   // 清掉舊的 GitHub token
+    var meta={}; try{meta=JSON.parse(localStorage.getItem(DK)||"{}")||{};}catch(e){meta={};}
+    function saveMeta(){try{localStorage.setItem(DK,JSON.stringify(meta));}catch(e){}}
     var pill=document.getElementById("syncPill"), msg=document.getElementById("syncMsg");
-    var form=document.getElementById("syncForm"), conn=document.getElementById("syncConn");
-    var timer=null, busy=false;
+    var inB=document.getElementById("syncIn"), outB=document.getElementById("syncOut");
+    var auth=null, db=null, ref=null, user=null, unsub=null, timer=null, writing=false;
     function status(cls,text,detail){
       pill.className="spill "+(cls||""); pill.textContent=text; if(detail!=null) msg.textContent=detail;
       var n=document.getElementById("storeNote");
-      if(n) n.textContent=cfg.token?"已連上 GitHub 雲端同步（"+cfg.repo+"），換裝置也能接著用。":"打卡、章節進度、計時與便利貼目前只存在這台裝置。到頁面下方「雲端同步」連上 GitHub，就能在手機和電腦之間同步。";
-    }
-    function ui(){
-      form.hidden=!!cfg.token; conn.hidden=!cfg.token;
-      if(!cfg.token) status("","未連線","把打卡、章節進度、讀書時數與便利貼存到你自己的私人 GitHub repo，換手機也不會消失。");
-      else status(cfg.dirty?"busy":"ok",cfg.dirty?"有變更待同步":"已同步",cfg.at?"上次同步："+new Date(cfg.at).toLocaleString("zh-TW",{hour12:false})+" · "+cfg.repo:cfg.repo);
-    }
-    function b64e(str){return btoa(unescape(encodeURIComponent(str)));}
-    function b64d(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,""))));}
-    function api(method,body){
-      return fetch("https://api.github.com/repos/"+cfg.repo+"/contents/progress.json"+(method==="GET"?"?t="+Date.now():""),{
-        method:method, cache:"no-store",
-        headers:{"Authorization":"Bearer "+cfg.token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},
-        body:body?JSON.stringify(body):undefined
-      });
+      if(n) n.textContent=user?"已登入雲端同步（"+(user.email||"Google 帳號")+"），手機和電腦會自動同步。":"打卡、章節進度、計時與便利貼目前只存在這台裝置。到頁面下方「雲端同步」用 Google 登入，就能在手機和電腦之間同步。";
     }
     function payload(o){var c={}; for(var k in o) if(k!=="timer") c[k]=o[k]; return c;}
     function merge(a,b){
@@ -776,86 +757,97 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       return m;
     }
     function same(a,b){return JSON.stringify(payload(a))===JSON.stringify(payload(b));}
-    function adopt(remote){
-      var timerKeep=st.timer, changed=!same(st,remote);
-      for(var k in st) if(k!=="timer") delete st[k];
-      for(var k2 in remote) if(k2!=="timer") st[k2]=remote[k2];
-      st.timer=timerKeep; st.days=st.days||{}; st.prog=st.prog||{};
+    function reloadWith(obj){
+      var keep=st.timer;
+      for(var k in st) delete st[k];
+      for(var k2 in obj) if(k2!=="timer") st[k2]=obj[k2];
+      st.timer=keep; st.days=st.days||{}; st.prog=st.prog||{};
       save(true);
-      if(changed){ try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){} location.reload(); }
-      return changed;
+      try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){}
+      location.reload();
     }
-    function fail(r,stage){
-      var why=r&&r.status===401?"Token 無效或已過期，請重新連線。":r&&r.status===404?"找不到 repo "+cfg.repo+"，或 token 沒有它的權限。":r&&r.status===403?"Token 權限不足，需要這個 repo 的 Contents 讀寫權限。":"連不上 GitHub（"+(r&&r.status||"網路錯誤")+"），稍後會再試。";
-      status("err","同步失敗",why); busy=false; return null;
+    function okStatus(){
+      status("ok","已同步",(user.email||"")+(meta.at?" · 上次同步 "+new Date(meta.at).toLocaleString("zh-TW",{hour12:false}):""));
     }
-    function pull(){
-      return api("GET").then(function(r){
-        if(r.status===404) return {missing:true,res:r};
-        if(!r.ok) throw r;
-        return r.json().then(function(j){return {sha:j.sha,data:JSON.parse(b64d(j.content))};});
-      });
+    function write(){
+      if(!ref) return Promise.resolve();
+      writing=true; status("busy","同步中…");
+      return ref.set({json:JSON.stringify(payload(st)),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+        .then(function(){ writing=false; meta.dirty=false; meta.at=Date.now(); saveMeta(); okStatus(); })
+        .catch(function(e){ writing=false; status("err","同步失敗",why(e)); });
     }
-    function push(sha,retry){
-      var body={message:"sync "+new Date().toISOString(),content:b64e(JSON.stringify(payload(st),null,1))};
-      if(sha) body.sha=sha;
-      return api("PUT",body).then(function(r){
-        if((r.status===409||r.status===422)&&!retry) return sync(true);
-        if(!r.ok) throw r;
-        return r.json().then(function(j){ cfg.sha=j.content.sha; cfg.dirty=false; cfg.at=Date.now(); saveCfg(); busy=false; ui(); });
-      });
+    function why(e){
+      var c=e&&e.code||"";
+      if(c.indexOf("permission-denied")>=0) return "Firestore 規則不允許寫入，請檢查安全規則。";
+      if(c.indexOf("popup-closed")>=0||c.indexOf("cancelled-popup")>=0) return "登入視窗被關掉了，再按一次登入。";
+      if(c.indexOf("unauthorized-domain")>=0) return "這個網址還沒加入 Firebase 的授權網域（yuan-5149.github.io）。";
+      if(c.indexOf("unavailable")>=0||c.indexOf("network")>=0) return "目前離線，恢復連線後會自動同步。";
+      return "發生錯誤："+(c||e&&e.message||"未知原因");
     }
-    function sync(force){
-      if(!cfg.token) return Promise.resolve();
-      if(busy&&!force) return Promise.resolve();
-      busy=true; status("busy","同步中…");
-      return pull().then(function(rem){
-        if(rem.missing){
-          // first time: repo exists but no file yet (or no access)
-          return api("GET").then(function(){ return push(null,true); });
+    function listen(){
+      ref=db.collection("users").doc(user.uid);
+      if(unsub) unsub();
+      var first=true;
+      unsub=ref.onSnapshot(function(doc){
+        if(doc.metadata.hasPendingWrites) return;
+        var isFirst=first; first=false;
+        if(!doc.exists){ write(); return; }
+        var remote={}; try{remote=JSON.parse(doc.data().json||"{}");}catch(e){}
+        if(meta.dirty||(isFirst&&!meta.linked)){
+          // 這台裝置有還沒上傳的變更，或第一次登入：合併兩邊
+          meta.linked=true; saveMeta();
+          var m=merge(st,remote), changed=!same(st,m);
+          var needWrite=!same(remote,m);
+          if(changed){ for(var k in m) st[k]=m[k]; save(true); }
+          (needWrite?write():Promise.resolve(okStatus())).then(function(){ if(changed) reloadWith(st); });
+          return;
         }
-        if(cfg.dirty){
-          var m=merge(st,rem.data); var changed=!same(st,m);
-          for(var k in m) st[k]=m[k]; save(true);
-          return push(rem.sha,true).then(function(){ if(changed){ try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){} location.reload(); } });
-        }
-        cfg.sha=rem.sha; cfg.at=Date.now(); cfg.dirty=false; saveCfg(); busy=false; ui();
-        adopt(rem.data);
-      }).catch(function(r){ return fail(r); });
+        meta.at=Date.now(); saveMeta();
+        if(!same(st,remote)) reloadWith(remote); else okStatus();
+      },function(e){ status("err","同步失敗",why(e)); });
     }
     window.__sync={changed:function(){
-      if(!cfg.token) return;
-      cfg.dirty=true; saveCfg(); ui();
-      clearTimeout(timer); timer=setTimeout(function(){sync();},2500);
+      if(!user) return;
+      meta.dirty=true; saveMeta(); status("busy","有變更待同步");
+      clearTimeout(timer); timer=setTimeout(write,1500);
     }};
-    // remember note deletions so they don't come back from another device
-    var origFilter=null;
     document.addEventListener("click",function(e){
       var d=e.target.closest("[data-del]"); if(d&&d.dataset.confirm==="1"){ st.gone=st.gone||{}; st.gone[d.dataset.del]=1; }
       if(e.target.id==="rvDone"){ var q=document.getElementById("rvQ").textContent; (st.notes||[]).forEach(function(n){ if(n.q===q){ st.gone=st.gone||{}; st.gone[n.id]=1; } }); }
     },true);
 
-    form.addEventListener("submit",function(e){
-      e.preventDefault();
-      var repo=document.getElementById("syncRepo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,"");
-      var tok=document.getElementById("syncToken").value.trim();
-      if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ status("err","格式錯誤","repo 請填成「帳號/名稱」，例如 YUAN-5149/exam-study-data。"); return; }
-      cfg={repo:repo,token:tok,dirty:true}; saveCfg();
-      document.getElementById("syncToken").value="";
-      ui(); sync().then(function(){ if(!cfg.dirty&&cfg.at) return; });
-      // if the very first sync fails, drop the bad token so the form shows again
-      setTimeout(function(){ if(pill.classList.contains("err")&&!cfg.at){ var m=msg.textContent; cfg={}; saveCfg(); ui(); status("err","連線失敗",m); } },8000);
+    if(!FB_CONFIG){ inB.disabled=true; status("","尚未設定","Firebase 專案還沒設定完成。"); return; }
+    function load(src){return new Promise(function(ok,no){var x=document.createElement("script");x.src=src;x.onload=ok;x.onerror=no;document.head.appendChild(x);});}
+    status("busy","連線中…");
+    var base="https://www.gstatic.com/firebasejs/"+VER+"/";
+    load(base+"firebase-app-compat.js").then(function(){return Promise.all([load(base+"firebase-auth-compat.js"),load(base+"firebase-firestore-compat.js")]);}).then(function(){
+      firebase.initializeApp(FB_CONFIG);
+      auth=firebase.auth(); db=firebase.firestore();
+      auth.getRedirectResult().catch(function(e){ status("err","登入失敗",why(e)); });
+      auth.onAuthStateChanged(function(u){
+        user=u; inB.hidden=!!u; outB.hidden=!u;
+        if(!u){ if(unsub){unsub();unsub=null;} ref=null; status("","未登入","用 Google 帳號登入，打卡、章節進度、讀書時數與便利貼會即時同步到手機和電腦。"); return; }
+        var just=false; try{just=sessionStorage.getItem("studyhub.pulled")==="1"; sessionStorage.removeItem("studyhub.pulled");}catch(e){}
+        status("busy","同步中…",u.email||"");
+        listen();
+        if(just) okStatus();
+      });
+    }).catch(function(){ status("err","載入失敗","無法載入 Firebase，請檢查網路後重新整理。"); });
+
+    inB.addEventListener("click",function(){
+      if(!auth) return;
+      var pv=new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(pv).catch(function(e){
+        var c=e&&e.code||"";
+        if(c.indexOf("popup-blocked")>=0||c.indexOf("operation-not-supported")>=0) return auth.signInWithRedirect(pv);
+        status("err","登入失敗",why(e));
+      });
     });
-    document.getElementById("syncNow").addEventListener("click",function(){ cfg.dirty=cfg.dirty||false; sync(); });
-    document.getElementById("syncOff").addEventListener("click",function(){
+    outB.addEventListener("click",function(){
       var b=this;
-      if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="確定中斷？（資料仍保留在 GitHub）"; setTimeout(function(){b.dataset.c="";b.textContent="在這台裝置中斷連線";},4000); return; }
-      cfg={}; saveCfg(); ui();
+      if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="確定登出？（資料仍保留在雲端）"; setTimeout(function(){b.dataset.c="";b.textContent="登出這台裝置";},4000); return; }
+      meta={}; saveMeta(); auth.signOut();
     });
-    document.addEventListener("visibilitychange",function(){ if(!document.hidden&&cfg.token&&!busy) sync(); });
-    ui();
-    var justPulled=false; try{justPulled=sessionStorage.getItem("studyhub.pulled")==="1"; sessionStorage.removeItem("studyhub.pulled");}catch(e){}
-    if(cfg.token){ if(justPulled) { status("ok","已同步","已從 GitHub 載入最新資料 · "+cfg.repo); } else sync(); }
   })();
 })();
 </script>
