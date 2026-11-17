@@ -792,6 +792,10 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       if(c.indexOf("configuration-not-found")>=0) return "Firebase 的 Authentication 還沒啟用：到主控台 Authentication 按「開始使用」，再啟用 Google 登入。";
       if(c.indexOf("operation-not-allowed")>=0) return "Google 登入方式還沒啟用：到 Authentication →「登入方式」把 Google 打開並儲存。";
       if(c.indexOf("unavailable")>=0||c.indexOf("network")>=0) return "目前離線，恢復連線後會自動同步。";
+      if(c.indexOf("popup-blocked")>=0) return "瀏覽器擋住了登入視窗。請在瀏覽器設定允許這個網站的彈出式視窗，再按一次登入。";
+      if(c.indexOf("web-storage-unsupported")>=0||c.indexOf("operation-not-supported")>=0) return "這個瀏覽器不支援登入（可能是無痕模式或封鎖了 Cookie）。請用一般模式的 Chrome 或 Safari 開啟。";
+      if(c.indexOf("network-request-failed")>=0) return "網路連線失敗，請確認網路後再試一次。";
+      if(c.indexOf("internal-error")>=0) return "登入時發生內部錯誤，請關掉分頁重開後再試。（"+c+"）";
       return "發生錯誤："+(c||e&&e.message||"未知原因");
     }
     function listen(){
@@ -826,6 +830,12 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       if(e.target.id==="rvDone"){ var q=document.getElementById("rvQ").textContent; (st.notes||[]).forEach(function(n){ if(n.q===q){ st.gone=st.gone||{}; st.gone[n.id]=1; } }); }
     },true);
 
+    var ua=navigator.userAgent||"";
+    if(/Line\/|FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|; wv\)/i.test(ua)){
+      inB.disabled=true; inB.textContent="請改用 Chrome 或 Safari 開啟";
+      status("err","無法在這裡登入","你現在是在 LINE、Facebook 等 App 裡面開啟網頁，Google 不允許在這裡登入。請點右上角「⋯」選「用瀏覽器開啟」，或複製網址到 Chrome／Safari。");
+      return;
+    }
     if(!FB_CONFIG){ inB.disabled=true; status("","尚未設定","Firebase 專案還沒設定完成。"); return; }
     function load(src){return new Promise(function(ok,no){var x=document.createElement("script");x.src=src;x.onload=ok;x.onerror=no;document.head.appendChild(x);});}
     status("busy","連線中…");
@@ -849,7 +859,6 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       var pv=new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(pv).catch(function(e){
         var c=e&&e.code||"";
-        if(c.indexOf("popup-blocked")>=0||c.indexOf("operation-not-supported")>=0) return auth.signInWithRedirect(pv);
         status("err","登入失敗",why(e));
       });
     });
