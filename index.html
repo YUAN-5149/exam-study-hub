@@ -433,7 +433,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       <button type="button" class="nbtn pri" id="syncIn">用 Google 登入並同步</button>
       <button type="button" class="nbtn" id="syncOut" hidden>登出這台裝置</button>
     </div>
-    <form class="sform" id="pwLogin" hidden>
+    <form class="sform" id="pwLogin">
       <p class="store-note">手機用 Google 登入失敗時，改用 Email 和密碼登入（密碼要先在已登入的電腦上設定）。</p>
       <label for="pwEmail">Email</label>
       <input id="pwEmail" type="email" autocomplete="username" required>
@@ -777,14 +777,21 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       m.notes=m.notes.filter(function(n){return !m.gone[n.id];});
       return m;
     }
-    function same(a,b){return JSON.stringify(payload(a))===JSON.stringify(payload(b));}
+    function canon(v){ if(Array.isArray(v)) return "["+v.map(canon).sort().join(",")+"]";
+      if(v&&typeof v==="object") return "{"+Object.keys(v).filter(function(k){return k!=="timer"&&v[k]!==undefined;}).sort().map(function(k){return JSON.stringify(k)+":"+canon(v[k]);}).join(",")+"}";
+      return JSON.stringify(v); }
+    function norm(o){ o=o||{}; var c={days:o.days||{},prog:{},mins:o.mins||{},poms:o.poms||{},notes:o.notes||[],gone:o.gone||{}};
+      for(var k in (o.prog||{})) if((o.prog[k]||[]).length) c.prog[k]=o.prog[k]; return c; }
+    function same(a,b){return canon(norm(a))===canon(norm(b));}
     function reloadWith(obj){
       obj=JSON.parse(JSON.stringify(obj)); var keep=st.timer;
       for(var k in st) delete st[k];
       for(var k2 in obj) if(k2!=="timer") st[k2]=obj[k2];
       st.timer=keep; st.days=st.days||{}; st.prog=st.prog||{};
       save(true);
-      try{sessionStorage.setItem("studyhub.pulled","1");}catch(e){}
+      var last=0; try{last=+sessionStorage.getItem("studyhub.reloadAt")||0;}catch(e){}
+      if(Date.now()-last<20000){ okStatus(); return; }   // 避免連續重新整理
+      try{sessionStorage.setItem("studyhub.pulled","1");sessionStorage.setItem("studyhub.reloadAt",String(Date.now()));}catch(e){}
       location.reload();
     }
     function okStatus(){
@@ -857,7 +864,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     load(base+"firebase-app-compat.js").then(function(){return Promise.all([load(base+"firebase-auth-compat.js"),load(base+"firebase-firestore-compat.js")]);}).then(function(){
       firebase.initializeApp(FB_CONFIG);
       auth=firebase.auth(); db=firebase.firestore();
-      auth.getRedirectResult().catch(function(e){ status("err","登入失敗",why(e)); });
+      try{ Object.keys(sessionStorage).forEach(function(k){ if(k.indexOf("firebase:pendingRedirect")===0) sessionStorage.removeItem(k); }); }catch(e){}
       auth.onAuthStateChanged(function(u){
         user=u; inB.hidden=!!u; outB.hidden=!u; pwRefresh();
         if(!u){ if(unsub){unsub();unsub=null;} ref=null; status("","未登入","用 Google 帳號登入，打卡、章節進度、讀書時數與便利貼會即時同步到手機和電腦。"); return; }
