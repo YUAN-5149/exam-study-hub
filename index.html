@@ -729,7 +729,14 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
   /* ---------- Firebase 雲端同步 ---------- */
   (function(){
     // 從 Firebase 主控台「專案設定 → 你的應用程式 → SDK 設定」複製過來（這些值可以公開）
-    var FB_CONFIG = null; /*FB_CONFIG*/
+    var FB_CONFIG = {
+      apiKey: "AIzaSyBF_2ixKBdlwZZBszxb0JVWwkrWuqJO5Dw",
+      authDomain: "exam-study-hub.firebaseapp.com",
+      projectId: "exam-study-hub",
+      storageBucket: "exam-study-hub.firebasestorage.app",
+      messagingSenderId: "306458739125",
+      appId: "1:306458739125:web:e01c1b06528d7a2a6259fc"
+    };
     var VER="10.12.2", DK="studyhub.fb";
     try{localStorage.removeItem("studyhub.sync");}catch(e){}   // 清掉舊的 GitHub token
     var meta={}; try{meta=JSON.parse(localStorage.getItem(DK)||"{}")||{};}catch(e){meta={};}
@@ -758,7 +765,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     }
     function same(a,b){return JSON.stringify(payload(a))===JSON.stringify(payload(b));}
     function reloadWith(obj){
-      var keep=st.timer;
+      obj=JSON.parse(JSON.stringify(obj)); var keep=st.timer;
       for(var k in st) delete st[k];
       for(var k2 in obj) if(k2!=="timer") st[k2]=obj[k2];
       st.timer=keep; st.days=st.days||{}; st.prog=st.prog||{};
