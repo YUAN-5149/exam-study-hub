@@ -779,9 +779,10 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     function write(){
       if(!ref) return Promise.resolve();
       writing=true; status("busy","同步中…");
+      var wd=setTimeout(function(){ if(writing) status("err","連不上雲端資料庫","已登入，但一直連不上 Firestore。請確認 Firebase 主控台已建立 Firestore Database 並發布安全規則；資料會先存在這台裝置，連上後自動上傳。"); },15000);
       return ref.set({json:JSON.stringify(payload(st)),updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
-        .then(function(){ writing=false; meta.dirty=false; meta.at=Date.now(); saveMeta(); okStatus(); })
-        .catch(function(e){ writing=false; status("err","同步失敗",why(e)); });
+        .then(function(){ clearTimeout(wd); writing=false; meta.dirty=false; meta.at=Date.now(); saveMeta(); okStatus(); })
+        .catch(function(e){ clearTimeout(wd); writing=false; status("err","同步失敗",why(e)); });
     }
     function why(e){
       var c=e&&e.code||"";
