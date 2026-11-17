@@ -998,6 +998,12 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
     else document.getElementById("iosHint").hidden=false;
   });
   window.addEventListener("appinstalled",function(){ ib.hidden=true; });
+  // 在已安裝的 App（Android／電腦）裡，同網站的學習頁直接在 App 內開啟，不跳出有藍色工具列的瀏覽器分頁
+  if(standalone && !/iphone|ipad|ipod/i.test(navigator.userAgent)){
+    document.querySelectorAll('a[target="_blank"]').forEach(function(a){
+      try{ if(new URL(a.href).host===location.host) a.removeAttribute("target"); }catch(e){}
+    });
+  }
   var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
   if(ios && !standalone){ ib.hidden=false; }
 })();
