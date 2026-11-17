@@ -433,6 +433,20 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       <button type="button" class="nbtn pri" id="syncIn">用 Google 登入並同步</button>
       <button type="button" class="nbtn" id="syncOut" hidden>登出這台裝置</button>
     </div>
+    <form class="sform" id="pwLogin" hidden>
+      <p class="store-note">手機用 Google 登入失敗時，改用 Email 和密碼登入（密碼要先在已登入的電腦上設定）。</p>
+      <label for="pwEmail">Email</label>
+      <input id="pwEmail" type="email" autocomplete="username" required>
+      <label for="pwPass">密碼</label>
+      <input id="pwPass" type="password" autocomplete="current-password" minlength="6" required>
+      <div class="row"><button type="submit" class="nbtn pri">用 Email 登入</button><button type="button" class="nbtn" id="pwForgot">忘記密碼</button></div>
+    </form>
+    <form class="sform" id="pwSet" hidden>
+      <p class="store-note">設定一組登入密碼，手機就能用「Email＋密碼」登入同一個帳號。</p>
+      <label for="pwNew">設定登入密碼（至少 6 碼）</label>
+      <input id="pwNew" type="password" autocomplete="new-password" minlength="6" required>
+      <div class="row"><button type="submit" class="nbtn pri">儲存密碼</button></div>
+    </form>
   </section>
   <footer id="today"></footer>
 </div>
@@ -845,7 +859,7 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       auth=firebase.auth(); db=firebase.firestore();
       auth.getRedirectResult().catch(function(e){ status("err","登入失敗",why(e)); });
       auth.onAuthStateChanged(function(u){
-        user=u; inB.hidden=!!u; outB.hidden=!u;
+        user=u; inB.hidden=!!u; outB.hidden=!u; pwRefresh();
         if(!u){ if(unsub){unsub();unsub=null;} ref=null; status("","未登入","用 Google 帳號登入，打卡、章節進度、讀書時數與便利貼會即時同步到手機和電腦。"); return; }
         var just=false; try{just=sessionStorage.getItem("studyhub.pulled")==="1"; sessionStorage.removeItem("studyhub.pulled");}catch(e){}
         status("busy","同步中…",u.email||"");
@@ -861,6 +875,41 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
         var c=e&&e.code||"";
         status("err","登入失敗",why(e));
       });
+    });
+    function pwRefresh(){
+      var hasPw=user&&(user.providerData||[]).some(function(x){return x.providerId==="password";});
+      document.getElementById("pwLogin").hidden=!!user;
+      document.getElementById("pwSet").hidden=!user||hasPw;
+    }
+    function pwWhy(e){
+      var c=e&&e.code||"";
+      if(/wrong-password|invalid-credential|invalid-login|user-not-found/.test(c)) return "Email 或密碼不正確。如果還沒設定過密碼，請先在已用 Google 登入的電腦上設定。";
+      if(c.indexOf("operation-not-allowed")>=0) return "Firebase 還沒啟用「電子郵件/密碼」登入方式，請到 Authentication →「登入方式」開啟。";
+      if(c.indexOf("weak-password")>=0) return "密碼太短，至少要 6 碼。";
+      if(c.indexOf("requires-recent-login")>=0) return "為了安全，請先登出再用 Google 重新登入一次，然後再設定密碼。";
+      if(c.indexOf("provider-already-linked")>=0||c.indexOf("credential-already-in-use")>=0||c.indexOf("email-already-in-use")>=0) return "這個帳號已經設定過密碼了。";
+      if(c.indexOf("too-many-requests")>=0) return "嘗試太多次，請稍後再試。";
+      return why(e);
+    }
+    document.getElementById("pwLogin").addEventListener("submit",function(e){
+      e.preventDefault(); if(!auth) return;
+      status("busy","登入中…");
+      auth.signInWithEmailAndPassword(document.getElementById("pwEmail").value.trim(),document.getElementById("pwPass").value)
+        .catch(function(err){ status("err","登入失敗",pwWhy(err)); });
+    });
+    document.getElementById("pwForgot").addEventListener("click",function(){
+      var em=document.getElementById("pwEmail").value.trim();
+      if(!em){ status("err","請先填 Email","在上面填好 Email，再按「忘記密碼」。"); return; }
+      auth.sendPasswordResetEmail(em).then(function(){ status("","已寄出","重設密碼的信已寄到 "+em+"，請到信箱點連結設定新密碼。"); })
+        .catch(function(err){ status("err","寄送失敗",pwWhy(err)); });
+    });
+    document.getElementById("pwSet").addEventListener("submit",function(e){
+      e.preventDefault(); if(!user) return;
+      var cred=firebase.auth.EmailAuthProvider.credential(user.email,document.getElementById("pwNew").value);
+      user.linkWithCredential(cred).then(function(r){
+        user=r.user; document.getElementById("pwNew").value=""; pwRefresh();
+        status("ok","密碼已設定","手機請在「用 Email 登入」填 "+user.email+" 和剛剛的密碼。");
+      }).catch(function(err){ status("err","設定失敗",pwWhy(err)); });
     });
     outB.addEventListener("click",function(){
       var b=this;
