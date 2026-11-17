@@ -1,5 +1,5 @@
 // 元的考照學習基地 service worker
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = "shell-" + VERSION;
 const RUNTIME = "runtime-" + VERSION;
 const PRECACHE = ["./", "./index.html", "./manifest.webmanifest",
@@ -27,9 +27,12 @@ self.addEventListener("fetch", e => {
     }).catch(() => caches.match("./index.html")));
     return;
   }
-  // 自己的靜態檔：快取優先
-  if (url.origin === location.origin) {
-    e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+  // 自己網站的檔案（manifest、圖示等）：先抓網路拿最新版，離線才用快取
+  if (url.origin === location.origin && url.pathname.startsWith("/exam-study-hub/")) {
+    e.respondWith(fetch(req).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(SHELL).then(c => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req)));
     return;
   }
   // 字型與 Firebase SDK（固定版本）：快取後背景更新
