@@ -788,6 +788,8 @@ a.lk:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
       if(c.indexOf("permission-denied")>=0) return "Firestore 規則不允許寫入，請檢查安全規則。";
       if(c.indexOf("popup-closed")>=0||c.indexOf("cancelled-popup")>=0) return "登入視窗被關掉了，再按一次登入。";
       if(c.indexOf("unauthorized-domain")>=0) return "這個網址還沒加入 Firebase 的授權網域（yuan-5149.github.io）。";
+      if(c.indexOf("configuration-not-found")>=0) return "Firebase 的 Authentication 還沒啟用：到主控台 Authentication 按「開始使用」，再啟用 Google 登入。";
+      if(c.indexOf("operation-not-allowed")>=0) return "Google 登入方式還沒啟用：到 Authentication →「登入方式」把 Google 打開並儲存。";
       if(c.indexOf("unavailable")>=0||c.indexOf("network")>=0) return "目前離線，恢復連線後會自動同步。";
       return "發生錯誤："+(c||e&&e.message||"未知原因");
     }
